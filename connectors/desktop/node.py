@@ -6,6 +6,7 @@ import hashlib
 import os
 import platform
 import sqlite3
+import stat
 import threading
 import time
 from pathlib import Path
@@ -21,6 +22,16 @@ except ImportError:
 
 CAPABILITIES = ["device.info", "files.list", "files.read", "files.write"]
 MAX_BYTES = 65536
+
+
+def is_link(path: Path) -> bool:
+    try:
+        info = path.lstat()
+    except FileNotFoundError:
+        return False
+    return stat.S_ISLNK(info.st_mode) or (
+        os.name == "nt" and info.st_reparse_tag == stat.IO_REPARSE_TAG_MOUNT_POINT
+    )
 
 
 def server_url(value: str) -> str:
@@ -69,7 +80,7 @@ class Folder:
         return (os.path.normcase(str(self.root)), stat.st_dev, stat.st_ino)
 
     def scope(self):
-        if self.root.is_symlink() or (hasattr(self.root, "is_junction") and self.root.is_junction()) or self._identity() != self.identity:
+        if is_link(self.root) or self._identity() != self.identity:
             raise ValueError("The shared folder changed. Reconnect and review folder access in HiveMind.")
         scope_id = hashlib.sha256(json.dumps(self.identity).encode()).hexdigest()
         return {"id": scope_id, "name": self.root.name or self.root.anchor}
@@ -87,7 +98,7 @@ class Folder:
         current = self.root
         for part in candidate.parts:
             current = current / part
-            if current.is_symlink() or (hasattr(current, "is_junction") and current.is_junction()):
+            if is_link(current):
                 raise ValueError("Links are not shared.")
         resolved = unresolved.resolve()
         if not resolved.is_relative_to(self.root):
@@ -107,10 +118,7 @@ class Folder:
                 for item in iterator:
                     if len(entries) == 200:
                         return {"entries": entries, "truncated": True}
-                    if item.is_symlink():
-                        continue
-                    item_path = Path(item.path)
-                    if hasattr(item_path, "is_junction") and item_path.is_junction():
+                    if is_link(Path(item.path)):
                         continue
                     entries.append({"name": item.name, "kind": "folder" if item.is_dir(follow_symlinks=False) else "file"})
             return {"entries": sorted(entries, key=lambda x: x["name"]), "truncated": False}

@@ -76,7 +76,7 @@ class AccountLoginTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(status['status'], 'connected')
         self.assertEqual(status['model'], 'gpt-test-model')
         self.assertNotIn('must-never-leak', json.dumps(status))
-        self.assertEqual(manager.profile_dir.parent, self.state / 'hermes-profile')
+        self.assertEqual(manager.profile_dir.parent.resolve(), (self.state / 'hermes-profile').resolve())
         self.assertTrue((manager.profile_dir / 'auth.json').exists())
         self.assertEqual((original / 'auth.json').read_text(), 'unchanged-original-auth')
         restored = AccountLogin(self.state, hermes_root=str(self.runtime), python=sys.executable)
