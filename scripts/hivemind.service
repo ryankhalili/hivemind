@@ -1,0 +1,18 @@
+[Unit]
+Description=HiveMind coordinator
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/hivemind
+Environment=HIVE_STATE=%h/hivemind/.state
+Environment=HIVE_BIND=127.0.0.1
+EnvironmentFile=-%h/.config/hivemind/environment
+ExecStart=%h/hivemind/.venv/bin/python -m hivemind
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+
+[Install]
+WantedBy=default.target

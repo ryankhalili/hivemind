@@ -1,0 +1,13 @@
+[Unit]
+Description=HiveMind temporary HTTPS tunnel
+After=network-online.target hivemind.service
+
+[Service]
+ExecStart=%h/hivemind/bin/cloudflared tunnel --no-autoupdate --url http://127.0.0.1:8787
+Restart=always
+RestartSec=10
+NoNewPrivileges=true
+UMask=0077
+
+[Install]
+WantedBy=default.target

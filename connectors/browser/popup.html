@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>HiveMind Browser</title><link rel="stylesheet" href="popup.css"></head>
+<body>
+<h1>HiveMind Browser</h1>
+<p>Share one tab, then approve its actions in your dashboard.</p>
+<form id="connect-form">
+<label>Server address<input id="server" type="url" placeholder="https://your-hivemind-server" required></label>
+<label>Pairing code<input id="code" autocomplete="off" maxlength="100" required></label>
+<label>Browser name<input id="name" value="My browser" maxlength="80" required></label>
+<button type="submit">Connect browser</button>
+</form>
+<section id="connected" hidden>
+<div id="identity"></div>
+<button id="share">Share this tab</button>
+<p id="shared">No tab shared.</p>
+<button id="unshare" class="secondary">Stop sharing</button>
+<button id="disconnect" class="secondary">Disconnect locally</button>
+</section>
+<p id="status" role="status" aria-live="polite">Ready to connect.</p>
+<p class="note">Keep this panel open to receive tasks. Closing it pauses the connector. Page text is read only from the tab you share. Native browser automation is not included in this draft.</p>
+<script src="popup.js"></script>
+</body></html>

@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#244b3b">
+  <meta name="description" content="Your conversations, tasks, and connected devices.">
+  <title>HiveMind</title>
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/static/manifest.webmanifest">
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <div id="login-screen" class="login-screen" hidden>
+    <form id="login-form" class="login-form">
+      <img src="/static/icon.svg" width="42" height="42" alt="">
+      <h1>HiveMind</h1>
+      <p>Sign in to your workspace.</p>
+      <label for="username">Username</label>
+      <input id="username" type="text" autocomplete="username" maxlength="32" placeholder="owner" autofocus>
+      <label for="password">Password</label>
+      <input id="password" type="password" autocomplete="current-password" required>
+      <button class="primary" type="submit">Sign in</button>
+      <p id="login-error" class="error" role="alert"></p>
+      <button id="show-signup" class="text-button" type="button">Have an invitation? Create a profile</button>
+      <small>Hosting this server? Use <strong>owner</strong> and the password created during setup.</small>
+    </form>
+    <form id="signup-form" class="login-form" hidden>
+      <img src="/static/icon.svg" width="42" height="42" alt="">
+      <h1>Create your profile</h1>
+      <p>Your chats, devices, memories, and model connection belong to your profile.</p>
+      <label for="signup-invite">Invitation code</label>
+      <input id="signup-invite" type="text" autocomplete="off" maxlength="128" required>
+      <label for="signup-name">Your name</label>
+      <input id="signup-name" type="text" autocomplete="name" maxlength="80" required>
+      <label for="signup-username">Username</label>
+      <input id="signup-username" type="text" autocomplete="username" minlength="3" maxlength="32" pattern="[a-zA-Z0-9][a-zA-Z0-9_.\-]{2,31}" required aria-describedby="username-help">
+      <small id="username-help">3–32 letters, numbers, dots, underscores, or hyphens. Start with a letter or number.</small>
+      <label for="signup-password">Password</label>
+      <input id="signup-password" type="password" autocomplete="new-password" minlength="12" maxlength="256" required aria-describedby="signup-password-help">
+      <small id="signup-password-help">Use at least 12 characters.</small>
+      <button class="primary" type="submit">Create profile</button>
+      <p id="signup-error" class="error" role="alert"></p>
+      <button id="show-login" class="text-button" type="button">Back to sign in</button>
+      <small>The person hosting this server operates the storage and can access its data. Only join a server you trust.</small>
+    </form>
+  </div>
+
+  <div id="app" class="app" hidden>
+    <aside class="sidebar">
+      <a class="brand" href="#chat"><img src="/static/icon.svg" width="30" height="30" alt=""><span>HiveMind</span></a>
+      <nav aria-label="Workspace">
+        <button data-tab="chat" class="nav-item active" aria-current="page">Chat</button>
+        <button data-tab="tasks" class="nav-item">Tasks <span id="task-count" class="count" hidden></span></button>
+        <button data-tab="devices" class="nav-item">Devices</button>
+        <button data-tab="memory" class="nav-item">Memory</button>
+        <button data-tab="settings" class="nav-item">Settings</button>
+      </nav>
+      <div class="sidebar-bottom"><button id="profile-shortcut" class="profile-shortcut" type="button">Your profile</button><a href="/guide" target="_blank" rel="noopener">Project guide <span aria-hidden="true">↗</span></a><span class="connection"><span id="connection-dot" class="dot"></span><span id="connection-label">Connecting to server</span></span></div>
+    </aside>
+    <main>
+      <header class="topbar"><span id="page-title">Chat</span><span id="provider-label" class="muted">Checking model connection</span></header>
+      <div id="notice" class="notice" role="status" hidden></div>
+
+      <section id="tab-chat" class="tab chat-tab" aria-label="Chat">
+        <div id="messages" class="messages" aria-live="polite" aria-relevant="additions">
+          <div class="chat-welcome"><span class="eyebrow">YOUR WORKSPACE</span><h1>What would you like to do?</h1><p>Ask a question, or send a task to a connected device.<br>You can keep talking while tasks run.</p><div class="suggestions"><button data-prompt="What can you help me do with my connected devices?">Explore my setup</button><button data-prompt="Show me the files in my shared folder.">Check my shared folder</button></div></div>
+        </div>
+        <div id="chat-pending" class="chat-pending" hidden><span class="pulse"></span> Thinking…</div>
+        <details id="chat-activity" class="chat-activity" hidden><summary id="activity-summary">Task activity</summary><div id="activity-list"></div></details>
+        <form id="chat-form" class="composer">
+          <label class="sr-only" for="prompt">Message</label><textarea id="prompt" rows="2" maxlength="12000" placeholder="Message HiveMind…" required></textarea>
+          <div class="composer-bottom"><div class="composer-options"><label><span class="sr-only">Target device</span><select id="chat-node"><option value="">Any connected device</option></select></label></div><button id="send-button" class="primary" type="submit">Send <span aria-hidden="true">↑</span></button></div>
+          <p class="composer-note">Folder access follows your device settings. Sensitive actions wait for approval.</p>
+        </form>
+      </section>
+
+      <section id="tab-tasks" class="tab content-tab" hidden>
+        <div class="section-heading"><div><h1>Tasks</h1><p>Follow work, review actions, and see what happened.</p></div><button id="new-task-button" class="secondary">New task</button></div>
+        <div id="tasks-list" class="item-list"></div>
+      </section>
+
+      <section id="tab-devices" class="tab content-tab" hidden>
+        <div class="section-heading"><div><h1>Devices</h1><p>Connect the computers and browsers you want HiveMind to use.</p></div><button id="pair-button" class="primary">Connect a device</button></div>
+        <div id="pairing-box" class="pairing-box" hidden><h2>Enter this code on your device</h2><div class="code-row"><code id="pairing-code"></code><button id="copy-code" class="secondary">Copy code</button></div><p id="pairing-expiry"></p><p>Server address: <code id="server-address"></code></p><small>Use the code once, in the connector you installed on your device. Keep it private.</small></div>
+        <div id="devices-list" class="item-list"></div>
+        <div class="setup-section"><h2>Set up a connector</h2><div class="setup-grid">
+          <article><h3>Windows</h3><p>Install the desktop connector, enter your server address and pairing code, then choose a shared folder.</p><a class="download-link" href="/downloads/HiveMind-Setup.exe">Download Windows installer</a></article>
+          <article><h3>Mac</h3><p>Download the launcher, then choose a shared folder. Requires Python 3 with Tk. Commands and local agents need separate permission.</p><a class="download-link" href="/downloads/HiveMind-Mac.zip">Download Mac launcher</a></article>
+          <article><h3>Browser</h3><p>Connect a Chrome browser. This development extension is loaded manually; installation steps are included.</p><a class="download-link" href="/downloads/HiveMind-Browser.zip">Download browser connector</a></article>
+        </div></div>
+        <details class="phone-help"><summary>Use HiveMind on Android or iPhone</summary><p>Open this server address on your phone and sign in. On Android, use your browser’s <strong>Install app</strong> or <strong>Add to Home screen</strong> option. On iPhone, use Safari’s <strong>Share → Add to Home Screen</strong>.</p><p>Your phone can send messages and approve tasks on connected computers. Native phone actions are a future connector.</p></details>
+      </section>
+
+      <section id="tab-memory" class="tab content-tab" hidden>
+        <div class="section-heading"><div><h1>Memory</h1><p>Review suggested memories and information you chose to keep.</p></div></div>
+        <p id="memory-summary" class="muted">Older conversations can be summarized and recalled when relevant. Suggested memories need your review.</p>
+        <div id="memory-candidates-section" class="memory-candidates-section" hidden><h2>Suggested memories</h2><p class="muted">Review each suggestion before it becomes a saved memory.</p><div id="memory-candidates" class="item-list"></div></div>
+        <form id="memory-form" class="memory-form"><label for="memory-content">Add a memory</label><textarea id="memory-content" rows="3" maxlength="6000" placeholder="For example: I prefer short answers with a concrete example." required></textarea><button class="primary" type="submit">Save memory</button></form>
+        <h2 class="saved-memory-heading">Saved memories</h2><p class="muted">Deleting a note also resets recalled conversation context. Your visible chat history stays.</p><div id="memory-list" class="item-list"></div>
+      </section>
+
+      <section id="tab-settings" class="tab content-tab" hidden>
+        <div class="section-heading"><div><h1>Settings</h1><p>Manage your profile, model connection, and invitations.</p></div></div>
+        <form id="profile-form" class="settings-form"><h2>Your profile</h2><p id="profile-username" class="muted"></p><label for="profile-name">Your name</label><input id="profile-name" type="text" autocomplete="name" maxlength="80" required><button class="secondary" type="submit">Save name</button><p id="profile-result" role="status"></p></form>
+        <details class="settings-details"><summary>Change password</summary><form id="password-form" class="settings-form"><label for="current-password">Current password</label><input id="current-password" type="password" autocomplete="current-password" maxlength="256" required><label for="new-password">New password</label><input id="new-password" type="password" autocomplete="new-password" minlength="12" maxlength="256" required><small>Use at least 12 characters. This signs out your other browser sessions.</small><button class="secondary" type="submit">Change password</button><p id="password-result" role="status"></p></form></details>
+        <div id="model-onboarding" class="settings-callout" hidden><h2>Connect a model to start chatting</h2><p>Choose your own subscription or API connection below. Connecting a device is a separate step.</p></div>
+        <form id="provider-form" class="settings-form"><fieldset><legend>AI connection</legend><label id="host-provider-option" class="radio-label"><input type="radio" name="provider" value="hermes" checked><span><strong>Use the host’s connected account</strong><small>Use the model account configured on this server. Available to the server owner only.</small></span></label><label class="radio-label"><input type="radio" name="provider" value="hermes-account"><span><strong>ChatGPT / Codex subscription</strong><small>Connect your subscription by signing in with your provider.</small></span></label><label class="radio-label"><input type="radio" name="provider" value="compatible"><span><strong>API connection</strong><small>Connect an OpenAI-compatible model endpoint using your own API key.</small></span></label></fieldset>
+          <div id="account-fields" hidden><label for="account-model">Model (optional)</label><input id="account-model" type="text" placeholder="Use the server’s default model" autocomplete="off"><p class="muted">Choose a model available to your subscription. Sign-in stays on this server.</p><button id="connect-account" class="secondary" type="button">Connect account</button><div id="account-flow" class="pairing-box" hidden><p id="account-status" role="status"></p><div id="account-verification" hidden><p>Enter this code on your provider’s sign-in page:</p><code id="account-code" class="account-code"></code><p><a id="account-link" target="_blank" rel="noopener noreferrer">Open provider sign-in</a></p><small>Only continue if you started this connection.</small></div><button id="cancel-account" class="secondary" type="button" hidden>Cancel sign-in</button></div></div>
+          <div id="api-fields" hidden><label for="base-url">API base URL</label><input id="base-url" type="url" placeholder="https://api.openai.com/v1" autocomplete="off" list="provider-endpoints"><datalist id="provider-endpoints"></datalist><p id="endpoint-help" class="muted"></p><label for="model-name">Model name</label><input id="model-name" type="text" placeholder="Model ID from your provider" autocomplete="off"><label for="api-key">API key (if required)</label><input id="api-key" type="password" autocomplete="new-password" placeholder="Enter a key to connect"><p class="muted">The key goes to your HiveMind server. It is never included in messages or stored in this browser.</p></div>
+          <button id="save-provider" class="primary" type="submit">Save connection</button><p id="provider-result" role="status"></p>
+        </form>
+        <section id="invitations-section" class="settings-note" hidden><h2>Invite someone</h2><p>Each invitation creates one separate profile. Other profiles do not share your chats, devices, memory, or model account.</p><button id="create-invite" class="secondary" type="button">Create invitation</button><div id="invitation-created" class="pairing-box" hidden><label for="invitation-link">Invitation link</label><input id="invitation-link" type="text" readonly autocomplete="off"><p id="invitation-expiry"></p><button id="copy-invitation" class="secondary" type="button">Copy link</button><small>Keep this link private. It works once. Copy it now; it is not shown again after you leave.</small></div><div id="invitations-list" class="item-list"></div><h2 class="profiles-heading">Profiles on this server</h2><div id="profiles-list" class="item-list"></div><p id="invitations-result" class="error" role="alert"></p></section>
+        <div class="settings-note"><h2>Devices and privacy</h2><p>Connecting a model account does not grant access to your devices. Pair each device and choose what it can do in Devices.</p><p>Your profile has its own history and settings. The server operator controls the server and its stored data.</p></div>
+        <button id="logout-button" class="secondary">Sign out</button>
+      </section>
+    </main>
+  </div>
+  <dialog id="task-dialog"><div class="dialog-header"><h2>Task details</h2><button id="close-task-dialog" class="icon-button" aria-label="Close task details">×</button></div><div id="task-detail"></div></dialog>
+  <dialog id="permissions-dialog"><div class="dialog-header"><h2>Device permissions</h2><button id="close-permissions-dialog" class="icon-button" aria-label="Close device permissions">×</button></div><form id="permissions-form"><p id="permissions-device"></p><fieldset class="approval-levels"><legend>When should HiveMind ask?</legend><p id="permissions-scope" class="muted"></p><label class="permission-option"><input type="radio" name="approval-level" value="ask" checked><span><strong>Ask every time</strong><small>Review every device action before it runs.</small></span></label><label class="permission-option"><input type="radio" name="approval-level" value="read"><span><strong>Allow routine reads</strong><small>Read and list files in the shared folder, and check device information, without asking each time.</small></span></label><label class="permission-option"><input type="radio" name="approval-level" value="folder"><span><strong>Allow reads and new files</strong><small>Also create new files in the shared folder. Existing files cannot be replaced or deleted.</small></span></label><p class="muted">Commands, device agents, and browser actions always need approval. Changing the shared folder resets this choice.</p></fieldset><h3 class="permissions-heading">Enabled actions</h3><div id="permissions-list"></div><p id="permissions-confirmation" class="muted"></p><p id="permissions-error" class="error" role="alert"></p><button class="primary" type="submit">Save permissions</button></form></dialog>
+  <dialog id="confirm-dialog"><form method="dialog"><h2 id="confirm-title">Confirm</h2><p id="confirm-text"></p><div class="dialog-actions"><button value="cancel" class="secondary">Cancel</button><button id="confirm-button" value="confirm" class="danger">Remove</button></div></form></dialog>
+</body>
+</html>

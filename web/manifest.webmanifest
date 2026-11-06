@@ -1,0 +1,1 @@
+{"name":"HiveMind","short_name":"HiveMind","description":"Your conversations, tasks, and connected devices.","start_url":"/","scope":"/","display":"standalone","background_color":"#fbfcfa","theme_color":"#244b3b","icons":[{"src":"/static/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any"}]}
