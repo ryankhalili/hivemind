@@ -39,8 +39,8 @@ class Coordinator:
         if self.closed:
             raise ValueError('This workspace is closed. Sign in again before starting a task.')
         task_id=uid(); now=time.time()
-        self.store.execute('INSERT INTO tasks(id,prompt,status,node_id,arguments,created_at,updated_at,parent_id,step_no,is_workflow) VALUES (?,?,?,?,?,?,?,?,?,?)',
-                           (task_id,prompt,'planning',node_id,json.dumps(arguments or {}),now,now,parent_id,step_no,int(not capability and not parent_id)))
+        self.store.execute('INSERT INTO tasks(id,prompt,status,node_id,capability,arguments,created_at,updated_at,parent_id,step_no,is_workflow) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+                           (task_id,prompt,'planning',node_id,capability,json.dumps(arguments or {}),now,now,parent_id,step_no,int(not capability and not parent_id)))
         self.store.event(task_id,'planning')
         self.schedule(task_id,capability,arguments)
         return self.store.task(task_id)

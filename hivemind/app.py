@@ -374,6 +374,8 @@ Return JSON only: {"reply":"your reply","task":null} for conversation. For a req
         body=await object_body(request)
         if old['status']=='outcome_unknown' and not body.get('confirmed_outcome'):
             raise HTTPException(409,'Check the device first, then confirm the previous outcome was reviewed.')
+        if not old['is_workflow'] and not old['capability']:
+            raise HTTPException(409,'The saved action is incomplete. Start a new task after reviewing the original request.')
         task=new_task(TaskInput(prompt=old['prompt'],node_id=old['node_id'],capability=None if old['is_workflow'] else old['capability'],arguments=old['arguments'] or {}))
         store.event(task['id'],'retry_of',old['id'])
         return task

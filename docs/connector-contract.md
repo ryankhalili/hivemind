@@ -21,6 +21,7 @@ States: `planning`, `waiting_children`, `awaiting_approval`, `queued`, `waiting_
 - `POST /api/tasks/{id}/approve {}` approves the displayed immutable child action. A parent cannot be approved as an open-ended grant.
 - `POST /api/tasks/{id}/cancel {}` requests a stop. Stopping a parent also stops further steps and requests cancellation of an active child.
 - `POST /api/tasks/{id}/retry {}` creates a new task ID for a failed or cancelled root task. For `outcome_unknown`, the owner must check the device and send `{confirmed_outcome:true}`. Child steps cannot be retried directly. Never retry automatically.
+- A concrete action's capability, device and arguments are saved before preparation and retained by manual retry. Current permissions and approval policy are checked again; prior approvals, leases and results are not copied. An older concrete record with no saved capability returns `409` instead of becoming a model-planned workflow; review the original request and create a new task.
 - `GET /api/tasks/{id}/events` returns timeline records with `id,task_id,kind,detail,created_at`.
 
 Approved work waits in `waiting_device` while its node is offline. A running stop request stays `cancel_requested` until a valid result arrives or its claim expires. `cancelled` is an acknowledgment, not rollback of prior effects. A device that finished first may still report success. Cancellation shortens a running claim to at most 30 more seconds; heartbeats cannot extend that stopping deadline. Loss of confirmation becomes `outcome_unknown`.
